@@ -1,75 +1,95 @@
-# React + TypeScript + Vite
+# 🍎 Fruit Shop — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite frontend สำหรับร้านผลไม้ออนไลน์แบบ microservices พร้อมชำระเงิน Omise
 
-Currently, two official plugins are available:
+## ✨ Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Login / Register
+- JWT refresh token อัตโนมัติ
+- ดูสินค้า + admin เพิ่ม/ลบสินค้า
+- ตะกร้าสินค้า + stock อัปเดต realtime
+- Checkout + ชำระเงิน Omise (test mode)
+- ประวัติออเดอร์
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Layer       | Technology            |
+| ----------- | --------------------- |
+| Framework   | React 19 + TypeScript |
+| Build Tool  | Vite                  |
+| Routing     | React Router v7       |
+| HTTP Client | Axios                 |
+| Payment     | Omise.js              |
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🏗️ Architecture
 
 ```
+Frontend (:5173)  ← this repo
+  ├── Auth Service (Render)     → login, register, refresh
+  └── API Gateway (:3004)       → products, cart, orders, payments
+        └── Commerce API (:3000)
+```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🔗 Related Repositories
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Service      | Repository                                                |
+| ------------ | --------------------------------------------------------- |
+| Commerce API | [commerce-api](https://github.com/panapolll/commerce-api) |
+| API Gateway  | [Api-Gateway](https://github.com/panapolll/Api-Gateway)   |
+| Auth Service | [Auth-Service](https://github.com/panapolll/Auth-Service) |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🚀 Getting Started
+
+```bash
+git clone https://github.com/panapolll/fruit-shop-frontend.git
+cd fruit-shop-frontend
+yarn install
+cp .env.example .env
+yarn dev
+```
+
+## ⚙️ Environment Variables
+
+| Variable                | Description      | Example                                  |
+| ----------------------- | ---------------- | ---------------------------------------- |
+| `VITE_AUTH_API_URL`     | Auth Service URL | `https://auth-service-7xty.onrender.com` |
+| `VITE_GATEWAY_URL`      | API Gateway URL  | `http://localhost:3004`                  |
+| `VITE_OMISE_PUBLIC_KEY` | Omise public key | `pkey_test_xxx`                          |
+
+## 📱 User Flow
 
 ```
+Register → Login → Products → Cart → Checkout → Payment → Orders
+```
+
+## 🧪 Test Payment (Omise)
+
+| Field  | Value                 |
+| ------ | --------------------- |
+| Card   | `4242 4242 4242 4242` |
+| Expiry | `12/2028`             |
+| CVV    | `123`                 |
+
+## 📸 Screenshots
+
+| Login                             | Register                                |
+| --------------------------------- | --------------------------------------- |
+| ![Login](./screenshots/login.png) | ![Register](./screenshots/register.png) |
+
+| Products                                | Cart                            |
+| --------------------------------------- | ------------------------------- |
+| ![Products](./screenshots/products.png) | ![Cart](./screenshots/cart.png) |
+
+| Payment                               |
+| ------------------------------------- |
+| ![Payment](./screenshots/payment.png) |
+
+## 👤 Demo Account
+
+| Role  | Email             | Password     |
+| ----- | ----------------- | ------------ |
+| Admin | `admin@gmail.com` | `1234567890` |
+
+## 👨‍💻 Author
+
+Portfolio project — microservices e-commerce.
