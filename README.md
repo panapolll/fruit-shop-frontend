@@ -1,3 +1,13 @@
+## 🌐 Live Demo
+
+https://fruit-shop-frontend-six.vercel.app
+**Demo Account**
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | `admin@gmail.com` | `1234567890` |
+
+---
+
 # 🍎 Fruit Shop — Frontend
 
 React + Vite frontend สำหรับร้านผลไม้ออนไลน์แบบ microservices พร้อมชำระเงิน Omise
