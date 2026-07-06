@@ -2,23 +2,32 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { GATEWAY_URL } from "./config";
 
 type RefreshHandler = () => Promise<string | null>;
+type LogoutHandler = () => void;
 
-let accessToken: string | null = null;
+let accessToken: string | null = localStorage.getItem("access_token");
 let refreshHandler: RefreshHandler | null = null;
+let logoutHandler: LogoutHandler | null = null;
 let isRefreshing = false;
 let refreshQueue: Array<{
   resolve: (token: string) => void;
   reject: (error: unknown) => void;
 }> = [];
 
-// App.tsx จะเรียกตอน token เปลี่ยน
 export const setAccessToken = (token: string | null) => {
   accessToken = token;
 };
 
-// App.tsx จะส่ง handleRefresh เข้ามา
 export const setRefreshHandler = (handler: RefreshHandler) => {
   refreshHandler = handler;
+};
+
+export const setLogoutHandler = (handler: LogoutHandler) => {
+  logoutHandler = handler;
+};
+
+const forceLogout = () => {
+  accessToken = null;
+  logoutHandler?.();
 };
 
 const processQueue = (error: unknown, token: string | null = null) => {
@@ -29,10 +38,8 @@ const processQueue = (error: unknown, token: string | null = null) => {
   refreshQueue = [];
 };
 
-// axios ตัวกลางสำหรับยิง Gateway
 export const gatewayClient = axios.create({ baseURL: GATEWAY_URL });
 
-// ทุก request แนบ access_token อัตโนมัติ
 gatewayClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
@@ -40,7 +47,6 @@ gatewayClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config;
 });
 
-// ถ้าได้ 401 → refresh แล้วลองใหม่
 gatewayClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -48,16 +54,16 @@ gatewayClient.interceptors.response.use(
       _retry?: boolean;
     };
 
-    if (
-      error.response?.status !== 401 ||
-      !originalRequest ||
-      originalRequest._retry ||
-      !refreshHandler
-    ) {
+    if (error.response?.status !== 401 || !originalRequest) {
       return Promise.reject(error);
     }
 
-    // ถ้ากำลัง refresh อยู่ รอคิว
+    // retry แล้วยัง 401 หรือไม่มี refreshHandler → logout
+    if (originalRequest._retry || !refreshHandler) {
+      forceLogout();
+      return Promise.reject(error);
+    }
+
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         refreshQueue.push({
@@ -77,6 +83,7 @@ gatewayClient.interceptors.response.use(
       const newToken = await refreshHandler();
       if (!newToken) {
         processQueue(new Error("refresh failed"));
+        forceLogout();
         return Promise.reject(error);
       }
 
@@ -86,6 +93,7 @@ gatewayClient.interceptors.response.use(
       return gatewayClient(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError);
+      forceLogout();
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

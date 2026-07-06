@@ -5,6 +5,7 @@ import axios from 'axios';
 import { gatewayClient } from '../api/client';
 import { addToCart } from '../api/cart';
 import { createProduct, deleteProduct } from '../api/products';
+import { getUnreadCount } from '../api/notifications';
 
 interface Product {
     _id: string;
@@ -42,6 +43,7 @@ function ProductsPage({ token, onLogout }: ProductsPageProps) {
     const [stock, setStock] = useState('');
     const [formError, setFormError] = useState('');
     const [cartMessage, setCartMessage] = useState('');
+    const [unreadCount, setUnreadCount] = useState(0);
 
     const fetchProducts = async () => {
         try {
@@ -61,6 +63,13 @@ function ProductsPage({ token, onLogout }: ProductsPageProps) {
     useEffect(() => {
         void fetchProducts();
     }, []);
+
+    useEffect(() => {
+        if (!token) return;
+        void getUnreadCount()
+            .then(setUnreadCount)
+            .catch(() => setUnreadCount(0));
+    }, [token]);
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -91,7 +100,7 @@ function ProductsPage({ token, onLogout }: ProductsPageProps) {
     const handleAddToCart = async (productId: string) => {
         try {
             await addToCart(productId, 1);
-            await fetchProducts(); // ← เพิ่มบรรทัดนี้
+            await fetchProducts();
             setCartMessage('✅ หยิบใส่ตะกร้าแล้ว');
             setTimeout(() => setCartMessage(''), 2000);
         } catch (err) {
@@ -183,6 +192,55 @@ function ProductsPage({ token, onLogout }: ProductsPageProps) {
                         </button>
                     )}
                     <button
+                        onClick={() => navigate('/notifications')}
+                        style={{
+                            background: 'transparent',
+                            border: '1px solid #f59e0b',
+                            color: '#f59e0b',
+                            padding: '8px 20px',
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                            fontSize: 14,
+                            position: 'relative',
+                        }}
+                    >
+                        🔔 แจ้งเตือน
+                        {unreadCount > 0 && (
+                            <span style={{
+                                position: 'absolute',
+                                top: -6,
+                                right: -6,
+                                background: '#ef4444',
+                                color: '#fff',
+                                fontSize: 11,
+                                fontWeight: 'bold',
+                                minWidth: 18,
+                                height: 18,
+                                borderRadius: 9,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '0 4px',
+                            }}>
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        onClick={() => navigate('/orders')}
+                        style={{
+                            background: 'transparent',
+                            border: '1px solid #a78bfa',
+                            color: '#a78bfa',
+                            padding: '8px 20px',
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                            fontSize: 14,
+                        }}
+                    >
+                        📦 ออเดอร์
+                    </button>
+                    <button
                         onClick={() => navigate('/cart')}
                         style={{
                             background: 'transparent',
@@ -246,15 +304,27 @@ function ProductsPage({ token, onLogout }: ProductsPageProps) {
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
                 gap: 20,
+                alignItems: 'stretch',
             }}>
                 {products.map((product) => (
-                    <div key={product._id} style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 12, padding: 20 }}>
+                    <div
+                        key={product._id}
+                        style={{
+                            background: '#1a1a1a',
+                            border: '1px solid #2a2a2a',
+                            borderRadius: 12,
+                            padding: 20,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            height: '100%',
+                        }}
+                    >
                         <div style={{ background: '#2a2a2a', borderRadius: 8, height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48, marginBottom: 16 }}>
                             🍎
                         </div>
                         <h3 style={{ color: '#fff', margin: '0 0 8px', fontSize: 18 }}>{product.name}</h3>
-                        <p style={{ color: '#888', margin: '0 0 16px', fontSize: 14 }}>{product.description}</p>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <p style={{ color: '#888', margin: '0 0 16px', fontSize: 14, flex: 1 }}>{product.description}</p>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
                             <span style={{ color: '#4ade80', fontWeight: 'bold', fontSize: 18 }}>฿{product.price.toLocaleString()}</span>
                             <span style={{ background: '#2a2a2a', color: '#888', padding: '4px 10px', borderRadius: 20, fontSize: 12 }}>
                                 เหลือ {product.stock} ชิ้น
