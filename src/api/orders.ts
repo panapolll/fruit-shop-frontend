@@ -1,7 +1,11 @@
 import { gatewayClient } from "./client";
 
 export interface OrderItem {
-  productId: string;
+  productId: {
+    _id: string;
+    name: string;
+    price: number;
+  };
   quantity: number;
   price: number;
 }
@@ -12,10 +16,12 @@ export interface Order {
   items: OrderItem[];
   totalPrice: number;
   status: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export const checkout = async (): Promise<Order> => {
-  const response = await gatewayClient.post("/orders/checkout");
+  const response = await gatewayClient.post<Order>("/orders/checkout");
   return response.data;
 };
 
