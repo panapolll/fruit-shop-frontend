@@ -34,6 +34,7 @@ function App() {
     localStorage.removeItem('token');
     setAccessToken(null);
     setToken(null);
+    window.location.href = '/login';
   }, []);
 
   const handleLogin = (accessToken: string, refresh: string, userId: string) => {
