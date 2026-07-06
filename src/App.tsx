@@ -27,15 +27,24 @@ function App() {
   const [authReady, setAuthReady] = useState(false);
   const [token, setToken] = useState<string | null>(null);
 
-  const handleLogout = useCallback(() => {
+  // ล้าง token อย่างเดียว — ไม่ redirect
+  const clearAuth = useCallback(() => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_id');
     localStorage.removeItem('token');
     setAccessToken(null);
     setToken(null);
-    window.location.href = '/login';
   }, []);
+
+  // logout จริง — ล้าง + redirect เฉพาะเมื่อไม่ได้อยู่หน้า login/register
+  const handleLogout = useCallback(() => {
+    clearAuth();
+    const path = window.location.pathname;
+    if (path !== '/login' && path !== '/register') {
+      window.location.href = '/login';
+    }
+  }, [clearAuth]);
 
   const handleLogin = (accessToken: string, refresh: string, userId: string) => {
     localStorage.removeItem('token');
@@ -51,7 +60,7 @@ function App() {
     const userId = localStorage.getItem('user_id');
 
     if (!refresh || !userId) {
-      handleLogout();
+      clearAuth();
       return null;
     }
 
@@ -66,22 +75,21 @@ function App() {
       handleLogout();
       return null;
     }
-  }, [handleLogout]);
+  }, [clearAuth, handleLogout]);
 
-  // ลงทะเบียน handler ให้ client.ts
   useEffect(() => {
     setRefreshHandler(handleRefresh);
     setLogoutHandler(handleLogout);
   }, [handleRefresh, handleLogout]);
 
-  // เช็ค auth ตอนเปิดแอป — รอเสร็จก่อนแสดงหน้า
   useEffect(() => {
     const initAuth = async () => {
       const access = localStorage.getItem('access_token');
       const refresh = localStorage.getItem('refresh_token');
 
+      // ไม่มี token → ล้างอย่างเดียว ไม่ reload
       if (!access || !refresh) {
-        handleLogout();
+        clearAuth();
         setAuthReady(true);
         return;
       }
@@ -89,7 +97,7 @@ function App() {
       if (isTokenExpired(access)) {
         const newToken = await handleRefresh();
         if (!newToken) {
-          handleLogout();
+          clearAuth();
         }
       } else {
         setAccessToken(access);
@@ -100,10 +108,24 @@ function App() {
     };
 
     void initAuth();
-  }, [handleRefresh, handleLogout]);
+  }, [clearAuth, handleRefresh]);
+
+  // เช็ค token ระหว่างใช้งาน
+  useEffect(() => {
+    if (!token) return;
+
+    const interval = setInterval(() => {
+      const access = localStorage.getItem('access_token');
+      if (access && isTokenExpired(access)) {
+        void handleRefresh();
+      }
+    }, 30_000);
+
+    return () => clearInterval(interval);
+  }, [token, handleRefresh]);
 
   if (!authReady) {
-    return null; // หรือ <div>Loading...</div>
+    return null;
   }
 
   return (
