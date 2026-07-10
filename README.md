@@ -11,7 +11,11 @@
 ## ใช้อะไรทำ
 React, TypeScript, Vite
 
+## หน้าเว็ปไซต์
+https://fruit-shop-frontend-six.vercel.app
+
 ## วิธีรัน
 ```bash
 yarn install
 yarn dev
+
